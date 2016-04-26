@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#
+# SIMPLE PASSWORD MANAGER
+#
+# This code HAS NOT BEEN AUDITED.
+# Use at your own risk.
+#
+# example:
+#	$spm new example.com user 
+#
+#   Options:
+#    ls         list all records
+#    new        new record
+
+# Enable 'strict mode'
+# more at http://redsymbol.net/articles/unofficial-bash-strict-mode/
+set -euo pipefail
+IFS=$'\n\t'
+
+#Init 
+PASSONLY=false
+STORAGE=''
+STORAGEDIR=$HOME/.local/spm/
+STORAGEFILE=$STORAGEDIR/storage.aes
+if [ ! -d $STORAGEDIR ]; then
+	mkdir -p $STORAGEDIR
+fi
+if [ -e $STORAGEFILE ]; then
+	STORAGE=`openssl enc -aes-256-cbc -d -in $STORAGEFILE`
+fi
+
+case $1 in
+	new)
+		LOGIN=$2
+		DOMAIN=$3
+		read -sp 'Enter password (leave empty for auto):' DOMAINPASS 
+		if [ -z "$DOMAINPASS" ]; then
+			DOMAINPASS=`apg -a 1 -m 15 -n 1`
+		fi
+		STORAGE="$DOMAIN $LOGIN $DOMAINPASS"$'\n'"$STORAGE"
+		echo "$STORAGE" | openssl enc -aes-256-cbc -salt -out $STORAGEFILE 
+		;;
+	ls)
+		if [ "$#" -lt 2 ]; then
+			echo "$STORAGE"
+		else
+			echo "$STORAGE" | grep $2
+		fi
+		;;
+	rm)
+		REQUEST=$2
+		LOGIN=`echo $REQUEST | cut -d '@' -f 1`
+		DOMAIN=`echo $REQUEST | cut -d '@' -f 2`
+		echo "$STORAGE" | grep -v "^$DOMAIN $LOGIN" | openssl enc -aes-256-cbc -salt -out $STORAGEFILE 
+		;;
+	*)
+		REQUEST=$1
+		LOGIN=`echo $REQUEST | cut -d '@' -f 1`
+		DOMAIN=`echo $REQUEST | cut -d '@' -f 2`
+		echo "$STORAGE" | awk -v login="$LOGIN" -v domain="$DOMAIN" '{if ($1 == domain && $2 == login) print $3}'
+		;;
+esac
