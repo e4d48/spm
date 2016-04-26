@@ -1,27 +1,13 @@
 #!/bin/bash
 
-#
-# SIMPLE PASSWORD MANAGER
-#
-# This code HAS NOT BEEN AUDITED.
-# Use at your own risk.
-#
-# example:
-#	$spm new example.com user 
-#
-#   Options:
-#    ls         list all records
-#    new        new record
-
 # Enable 'strict mode'
 # more at http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
 IFS=$'\n\t'
 
 #Init 
-PASSONLY=false
 STORAGE=''
-STORAGEDIR=$HOME/.local/spm/
+STORAGEDIR=$HOME/.local/share/spm/
 STORAGEFILE=$STORAGEDIR/storage.aes
 if [ ! -d $STORAGEDIR ]; then
 	mkdir -p $STORAGEDIR
@@ -43,10 +29,13 @@ case $1 in
 		;;
 	ls)
 		if [ "$#" -lt 2 ]; then
-			echo "$STORAGE"
+			echo "$STORAGE" | awk '{print $2"@"$1}'
 		else
-			echo "$STORAGE" | grep $2
+			echo "$STORAGE" | awk '{print $2"@"$1}' | grep $2
 		fi
+		;;
+	export)
+			echo "$STORAGE"
 		;;
 	rm)
 		REQUEST=$2
