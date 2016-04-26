@@ -28,9 +28,9 @@ List all records (with passwords):
 
 Remove record:
 
-    $spm rm login@domain
+    $ spm rm login@domain
 
 Display password for a record:
 
-    $spm login@domain
+    $ spm login@domain
 
